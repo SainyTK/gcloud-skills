@@ -2,6 +2,13 @@
 
 Claude Code skills for Google Cloud Platform.
 
+## Prerequisites
+
+- [Claude Code](https://claude.ai/code) CLI installed
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`) installed and on PATH
+- At least one authenticated account: `gcloud auth login`
+- Python 3.9+
+
 ## Skills
 
 ### gcloud-log
