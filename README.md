@@ -32,6 +32,17 @@
 
 Trace and analyze Cloud Run logs by service name. Auto-resolves project ID and account from a local cache — no need to specify credentials each time.
 
+**Installation:** 
+- Claude Code:
+```bash
+npx skills add SainyTK/gcloud-skills -a claude-code
+```
+
+- Codex: 
+```bash
+npx skills add SainyTK/gcloud-skills -a codex
+```
+
 **Usage:** just say the service name.
 
 ```
