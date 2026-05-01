@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "last_updated": "YYYY-MM-DD",
+    "note": "Copy to context.json and fill in your credentials. context.json is gitignored."
+  },
+  "accounts": [
+    {
+      "email": "you@example.com",
+      "status": "active",
+      "alias": "personal"
+    }
+  ],
+  "projects": [
+    {
+      "projectId": "my-project-prod",
+      "name": "My Project Prod",
+      "account": "you@example.com",
+      "aliases": ["prod"]
+    },
+    {
+      "projectId": "my-project-dev",
+      "name": "My Project Dev",
+      "account": "you@example.com",
+      "aliases": ["dev"]
+    }
+  ],
+  "services": [
+    {
+      "name": "my-service",
+      "projectId": "my-project-prod",
+      "account": "you@example.com",
+      "url": "https://my-service-xxxxx-as.a.run.app",
+      "type": "cloud_run"
+    }
+  ]
+}
