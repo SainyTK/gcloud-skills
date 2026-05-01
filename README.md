@@ -16,10 +16,10 @@ show errors in psim-pipeline last 6h
 trace slow requests on api-gateway
 ```
 
-**Cache setup:** On first use, copy the template and fill in your credentials:
+**Cache setup:** Run once (and after adding new accounts/projects):
 
 ```bash
-cp .claude/skills/gcloud-log/context.json.example .claude/skills/gcloud-log/context.json
+python3 .claude/skills/gcloud-log/refresh-context.py
 ```
 
 `context.json` is gitignored — never committed.

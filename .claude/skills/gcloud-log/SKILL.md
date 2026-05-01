@@ -168,6 +168,11 @@ Update context.json when:
 
 context.json location: `.claude/skills/gcloud-log/context.json`
 
+Refresh cache:
+```bash
+python3 .claude/skills/gcloud-log/refresh-context.py
+```
+
 ## Known services (from cache)
 
 **set-gcp-ai-atlas-prod** (account: outsource2799@set.or.th):
