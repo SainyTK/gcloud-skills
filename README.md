@@ -1,6 +1,6 @@
 # cc-app/gcloud
 
-Personal Claude Code skills for Google Cloud Platform.
+Claude Code skills for Google Cloud Platform.
 
 ## Skills
 
