@@ -1,0 +1,16 @@
+{
+  "allowedTools": [
+    "Read",
+    "Write",
+    "Edit",
+    "Bash(gcloud logging read *)",
+    "Bash(gcloud config set account *)",
+    "Bash(gcloud config get-value account)",
+    "Bash(gcloud run services list *)",
+    "Bash(gcloud run services describe *)",
+    "Bash(gcloud auth list)",
+    "Bash(python3 .claude/skills/gcloud-log/*.py)",
+    "Bash(rg *)",
+    "Bash(grep *)"
+  ]
+}

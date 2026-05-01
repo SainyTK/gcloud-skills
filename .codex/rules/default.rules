@@ -1,0 +1,7 @@
+prefix_rule(pattern=["gcloud", "logging", "read"], decision="allow")
+prefix_rule(pattern=["gcloud", "auth", "list"], decision="allow")
+prefix_rule(pattern=["gcloud", "projects", "list"], decision="allow")
+prefix_rule(pattern=["gcloud", "projects", "describe"], decision="allow")
+prefix_rule(pattern=["gcloud", "run", "services", "list"], decision="allow")
+prefix_rule(pattern=["gcloud", "run", "services", "describe"], decision="allow")
+prefix_rule(pattern=["python3", ".codex/skills/gcloud-log/refresh-context.py"], decision="allow")

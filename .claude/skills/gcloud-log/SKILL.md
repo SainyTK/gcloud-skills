@@ -28,7 +28,7 @@ Use this to resolve: service name → projectId + account (email). No need to as
 
 1. Search `services[]` in context.json by `name` (exact or substring match)
 2. Get `projectId` and `account` from matched entry
-3. If multiple matches (e.g. `api-bff` matches prod and dev), ask user: prod or dev?
+3. If multiple matches (e.g. `bff-service` matches prod and dev), ask user: prod or dev?
 4. If no match → fall back to Step 1b
 
 **Step 1b: Cache miss — discover and update**
@@ -62,6 +62,33 @@ Only needed if active account differs from required account.
 
 All services in current cache are Cloud Run → use `cloud_run_revision`.
 
+## Timezone warning — convert user time to UTC first
+
+**Always convert user-stated times to UTC before building timestamp filters.**
+
+Check `projects[].scheduler_timezone` in context.json for the project's timezone (auto-pulled from Cloud Scheduler jobs). Use that to convert. If missing, ask the user.
+
+Example — project has `"scheduler_timezone": "Europe/Paris"` (UTC+2 in CEST):
+- "1AM May 1" → `2026-04-30T23:00:00Z`
+- "5AM May 1" → `2026-05-01T03:00:00Z`
+- "midnight May 1" → `2026-04-30T22:00:00Z`
+
+Formula: `UTC = local_time - offset`. Paris = UTC+2 → subtract 2h.
+
+Wrong timezone = wrong logs or missing logs entirely. Do this step before writing any query.
+
+## Format warning — never use `--format=json`
+
+**`--format=json` fails with `JSONDecodeError: Invalid control character`** because log payloads contain raw control chars.
+
+Always use `value()` format instead:
+
+```bash
+--format="value(timestamp,severity,textPayload,jsonPayload.message)"
+```
+
+Note: `value()` truncates long payloads at terminal width. Cannot retrieve full payload via CLI — known limitation. Accept truncation and work with what's visible.
+
 ## Step 4: Run queries
 
 #### Recent logs (last 1h)
@@ -71,7 +98,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=1h \
   --limit=50 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### Errors only
@@ -81,7 +108,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=24h \
   --limit=100 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### User activity (audit logs)
@@ -91,7 +118,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=24h \
   --limit=100 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### Time window
@@ -100,7 +127,7 @@ gcloud logging read \
   'resource.type="cloud_run_revision" AND resource.labels.service_name="SERVICE_NAME" AND timestamp>="2026-01-01T00:00:00Z" AND timestamp<="2026-01-02T00:00:00Z"' \
   --project=PROJECT_ID \
   --limit=200 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### Keyword / text search
@@ -110,7 +137,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=6h \
   --limit=50 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### HTTP 4xx/5xx errors
@@ -120,7 +147,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=1h \
   --limit=50 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### Slow requests
@@ -130,7 +157,7 @@ gcloud logging read \
   --project=PROJECT_ID \
   --freshness=1h \
   --limit=50 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 #### Trace by request ID
@@ -139,18 +166,26 @@ gcloud logging read \
   'labels."run.googleapis.com/request_id"="REQUEST_ID"' \
   --project=PROJECT_ID \
   --limit=50 \
-  --format=json
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
+```
+
+#### Chronological order (oldest first)
+```bash
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND resource.labels.service_name="SERVICE_NAME" AND timestamp>="START_UTC"' \
+  --project=PROJECT_ID \
+  --limit=200 \
+  --order=asc \
+  --format="value(timestamp,severity,textPayload,jsonPayload.message)"
 ```
 
 ## Step 5: Parse and answer
 
-Extract from JSON logs:
-- `timestamp` — when
-- `severity` — level
-- `textPayload` or `jsonPayload` — message body
-- `httpRequest.status`, `httpRequest.latency` — HTTP logs
-- `protoPayload.status.message` — audit log errors
-- `labels` — trace IDs, revision names
+Extract from value() output (tab-separated columns):
+- col 1: `timestamp`
+- col 2: `severity`
+- col 3: `textPayload`
+- col 4: `jsonPayload.message`
 
 Output format:
 - **Summary**: N events/errors in time window, service, project
@@ -173,14 +208,6 @@ Refresh cache:
 python3 .claude/skills/gcloud-log/refresh-context.py
 ```
 
-## Known services (from cache)
-
-**set-gcp-ai-atlas-prod** (account: outsource2799@set.or.th):
-`api-bff`, `api-copilot`, `api-doc`, `api-gateway`, `app-atlas`, `langfuse`, `psim-ocr-pipeline`, `psim-pipeline`
-
-**set-gcp-ai-atlas-dev** (account: outsource2799@set.or.th):
-`api-bff-dev`, `api-bff-uat`, `api-copilot-dev`, `api-copilot-uat`, `api-doc-dev`, `api-doc-uat`, `api-gateway-dev`, `api-gateway-uat`, `app-atlas-dev`, `app-atlas-uat`, `langfuse`, `psim-ocr-pipeline-dev`, `psim-ocr-pipeline-uat`, `psim-pipeline-dev`, `psim-pipeline-uat`
-
 ## Auth troubleshooting
 
 Token expired → tell user to run:
@@ -192,7 +219,11 @@ Never attempt interactive auth. Never block on auth — surface the error and in
 
 ## Notes
 
-- `--format=json` for parsing; `--format=text` for quick human display
+- **Never use `--format=json`** — control chars in payloads break JSON parsing
+- Use `--format="value(timestamp,severity,textPayload,jsonPayload.message)"` always
+- Payload truncation in `value()` output is expected — not a bug, can't be fixed via CLI flags
+- **Timezone**: this project is UTC+2 (Paris/CEST). Always convert user times before querying
 - `--freshness`: `1h`, `6h`, `24h`, `7d`, `30d`
 - `--limit` max practical: 1000
+- `--order=asc` for chronological (pipeline start → end); default is newest-first
 - Log filter syntax: `AND`, `OR`, `NOT`; `:` for substring, `=` for exact
