@@ -10,6 +10,11 @@
     "Bash(gcloud run services describe *)",
     "Bash(gcloud auth list)",
     "Bash(python3 .claude/skills/gcloud-log/*.py)",
+    "Bash(bq ls *)",
+    "Bash(bq show *)",
+    "Bash(bq head *)",
+    "Bash(bq query *)",
+    "Bash(python3 .claude/skills/gcloud-bq/*.py)",
     "Bash(rg *)",
     "Bash(grep *)"
   ]

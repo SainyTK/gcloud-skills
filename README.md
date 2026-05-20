@@ -23,25 +23,31 @@
   - [Claude Code](https://claude.ai/code)
   - [Codex](https://developers.openai.com/codex/cli)
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`) installed and on PATH
+- BigQuery CLI (`bq`) installed and on PATH for `gcloud-bq`
 - At least one authenticated account: `gcloud auth login`
 - Python 3.9+
+
+## Installation
+
+Install the skills for your agent:
+
+Claude Code:
+
+```bash
+npx skills add SainyTK/gcloud-skills -a claude-code
+```
+
+Codex:
+
+```bash
+npx skills add SainyTK/gcloud-skills -a codex
+```
 
 ## Skills
 
 ### gcloud-log
 
 Trace and analyze Cloud Run logs by service name. Auto-resolves project ID and account from a local cache — no need to specify credentials each time.
-
-**Installation:** 
-- Claude Code:
-```bash
-npx skills add SainyTK/gcloud-skills -a claude-code
-```
-
-- Codex: 
-```bash
-npx skills add SainyTK/gcloud-skills -a codex
-```
 
 **Usage:** just say the service name.
 
@@ -53,11 +59,49 @@ trace slow requests on api-gateway
 
 **Cache setup:** Run once (and after adding new accounts/projects):
 
+Claude Code:
+
 ```bash
 python3 .claude/skills/gcloud-log/refresh-context.py
 ```
 
-`context.json` is gitignored — never committed.
+Codex:
+
+```bash
+python3 .codex/skills/gcloud-log/refresh-context.py
+```
+
+`context.json` is gitignored — never committed. It contains local account, project, and service metadata.
+
+### gcloud-bq
+
+Inspect BigQuery datasets, tables, schemas, sample rows, query jobs, and dry-run cost estimates. Uses read-only `bq` commands by default.
+
+**Usage:** name the BigQuery target or question.
+
+```
+show schema for analytics.events
+estimate cost for this query in project my-project
+list recent BigQuery jobs in my-project
+trace BigQuery job bquxjob_123
+sample 20 rows from analytics.users
+```
+
+**Cache setup:** Run once (and after adding new accounts/projects):
+
+Claude Code:
+
+```bash
+python3 .claude/skills/gcloud-bq/refresh-context.py .claude/skills/gcloud-bq/context.json
+```
+
+Codex:
+
+```bash
+python3 .codex/skills/gcloud-bq/refresh-context.py .codex/skills/gcloud-bq/context.json
+```
+
+`context.json` is gitignored — never committed. It contains local account, project, and dataset metadata.
 
 ## Permission Mode
 
@@ -67,6 +111,14 @@ This project includes starter permission templates for both agents:
 - Codex: `.codex/rules/default.rules`
 
 Use those files as templates when adding new skills. Keep rules narrow: prefer specific read/list/describe commands over broad `gcloud *` access.
+
+Current permissions allow:
+
+- Cloud Run log inspection with `gcloud logging read`
+- Cloud Run service discovery with `gcloud run services list/describe`
+- Project and auth discovery with `gcloud auth list` and `gcloud projects list/describe`
+- BigQuery read-only inspection with `bq ls`, `bq show`, `bq head`, and `bq query`
+- Local cache refresh scripts for `gcloud-log` and `gcloud-bq`
 
 For the smoothest default workflow, use one of these two modes. Prefer Don't Ask mode for this project once you trust the repo and GCP target, but use it with caution.
 
@@ -105,5 +157,5 @@ codex --sandbox workspace-write --ask-for-approval never
 ## Roadmap
 
 - `gcloud-log` — Cloud Run log tracing ✅
-- `bigquery` — query history, job traces, cost analysis
+- `gcloud-bq` — BigQuery query history, job traces, cost analysis ✅
 - `cloudsql` — slow query logs, connection issues

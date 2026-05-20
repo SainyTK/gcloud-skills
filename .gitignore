@@ -1,3 +1,4 @@
 # Credentials / sensitive cache
 .claude/skills/gcloud-log/context.json
+.claude/skills/gcloud-bq/context.json
 .DS_Store
